@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KeyVault — Windows License Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #1e1e2e;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --success: #00ff88;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    overflow-x: hidden;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.8);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+  }
+
+  .logo span { color: var(--accent); }
+
+  nav ul {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  nav ul a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--accent); }
+
+  .nav-cta {
+    background: var(--accent);
+    color: var(--bg) !important;
+    padding: 8px 20px;
+    border-radius: 2px;
+    font-weight: 500;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 120px 40px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+    top: -100px;
+    right: -100px;
+    pointer-events: none;
+  }
+
+  .hero-glow2 {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%);
+    bottom: 0;
+    left: 100px;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    padding: 6px 14px;
+    border-radius: 2px;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  h1 .accent { color: var(--accent); }
+  h1 .dim { color: var(--muted); }
+
+  .hero-sub {
+    font-size: 1rem;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 48px;
+    max-width: 500px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 14px 32px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover {
+    background: #00b8cc;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,229,255,0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 14px 32px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* STATS */
+  .stats {
+    display: flex;
+    gap: 48px;
+    margin-top: 64px;
+    padding-top: 48px;
+    border-top: 1px solid var(--border);
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* PRODUCTS */
+  .products {
+    padding: 120px 40px;
+    position: relative;
+  }
+
+  .section-header {
+    margin-bottom: 64px;
+  }
+
+  .section-tag {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .product-card {
+    background: var(--surface);
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .product-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+
+  .product-card:hover::before { transform: scaleX(1); }
+  .product-card:hover { background: #16161f; }
+
+  .product-card.featured {
+    background: linear-gradient(135deg, #13131a 0%, #1a1025 100%);
+  }
+
+  .product-card.featured::before { transform: scaleX(1); background: var(--accent2); }
+
+  .featured-badge {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: var(--accent2);
+    color: white;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+  }
+
+  .product-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.15);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+  }
+
+  .product-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .product-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .product-price {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .product-delivery {
+    font-size: 0.65rem;
+    color: var(--success);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .product-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+  }
+
+  .product-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,229,255,0.05);
+  }
+
+  /* HOW IT WORKS */
+  .how {
+    padding: 120px 40px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2px;
+    background: var(--border);
+    margin-top: 64px;
+  }
+
+  .step {
+    background: var(--bg);
+    padding: 40px;
+  }
+
+  .step-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--border);
+    margin-bottom: 20px;
+    line-height: 1;
+  }
+
+  .step-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .step-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* FAQ */
+  .faq {
+    padding: 120px 40px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid var(--border);
+    padding: 24px 0;
+  }
+
+  .faq-q {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .faq-a {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 48px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+  }
+
+  .footer-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+
+  .footer-logo span { color: var(--accent); }
+
+  .footer-text {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* CHAT WIDGET PLACEHOLDER */
+  .chat-hint {
+    position: fixed;
+    bottom: 90px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    z-index: 99;
+    animation: fadeUp 1s 2s ease both;
+    pointer-events: none;
+  }
+
+  @media (max-width: 768px) {
+    nav ul { display: none; }
+    .hero { padding: 100px 24px 60px; }
+    .products { padding: 80px 24px; }
+    .how { padding: 80px 24px; }
+    .stats { gap: 24px; flex-wrap: wrap; }
+    h1 { font-size: 2.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Key<span>Vault</span></div>
+  <ul>
+    <li><a href="#products">Products</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="https://tally.so/r/vGqYr4" class="nav-cta">Buy Now</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Instant delivery • 100% genuine keys
+    </div>
+    <h1>
+      Windows<br>
+      <span class="accent">Licenses</span><br>
+      <span class="dim">Delivered.</span>
+    </h1>
+    <p class="hero-sub">
+      Genuine Microsoft license keys delivered instantly to your inbox. 
+      Activate Windows or Office in minutes — no waiting, no hassle.
+    </p>
+    <div class="hero-actions">
+      <a href="#products" class="btn-primary">Browse Products</a>
+      <a href="#how" class="btn-secondary">How it works</a>
+    </div>
+    <div class="stats">
+      <div>
+        <div class="stat-num">2,400+</div>
+        <div class="stat-label">Keys sold</div>
+      </div>
+      <div>
+        <div class="stat-num">&lt;60s</div>
+        <div class="stat-label">Delivery time</div>
+      </div>
+      <div>
+        <div class="stat-num">99.8%</div>
+        <div class="stat-label">Success rate</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="products" id="products">
+  <div class="section-header">
+    <div class="section-tag">// Products</div>
+    <h2 class="section-title">Choose your license</h2>
+  </div>
+  <div class="products-grid">
+    <div class="product-card">
+      <div class="product-icon">🪟</div>
+      <div class="product-name">Windows 11 Home</div>
+      <div class="product-desc">Perfect for personal use. Full Windows 11 experience with all essential features.</div>
+      <div class="product-price">$15</div>
+      <div class="product-delivery">⚡ Instant delivery</div>
+      <a href="https://tally.so/r/vGqYr4" class="product-btn">Get License →</a>
+    </div>
+    <div class="product-card featured">
+      <div class="featured-badge">Most Popular</div>
+      <div class="product-icon">⚡</div>
+      <div class="product-name">Windows 11 Pro</div>
+      <div class="product-desc">Advanced features for power users. BitLocker, Remote Desktop, Hyper-V included.</div>
+      <div class="product-price">$25</div>
+      <div class="product-delivery">⚡ Instant delivery</div>
+      <a href="https://tally.so/r/vGqYr4" class="product-btn">Get License →</a>
+    </div>
+    <div class="product-card">
+      <div class="product-icon">🖥️</div>
+      <div class="product-name">Windows 10 Pro</div>
+      <div class="product-desc">Stable and reliable. Great for older hardware or business environments.</div>
+      <div class="product-price">$20</div>
+      <div class="product-delivery">⚡ Instant delivery</div>
+      <a href="https://tally.so/r/vGqYr4" class="product-btn">Get License →</a>
+    </div>
+    <div class="product-card">
+      <div class="product-icon">📊</div>
+      <div class="product-name">Office 2024</div>
+      <div class="product-desc">Word, Excel, PowerPoint and more. One-time purchase, no subscription.</div>
+      <div class="product-price">$35</div>
+      <div class="product-delivery">⚡ Instant delivery</div>
+      <a href="https://tally.so/r/vGqYr4" class="product-btn">Get License →</a>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="section-header">
+    <div class="section-tag">// Process</div>
+    <h2 class="section-title">How it works</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Choose product</div>
+      <div class="step-desc">Select the Windows or Office version you need from our catalog.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Fill the form</div>
+      <div class="step-desc">Enter your name and email address. Takes less than 30 seconds.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Complete payment</div>
+      <div class="step-desc">Secure payment processing. Multiple methods accepted.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Get your key</div>
+      <div class="step-desc">License key delivered to your inbox instantly. Activate and enjoy.</div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="section-header">
+    <div class="section-tag">// FAQ</div>
+    <h2 class="section-title">Questions?</h2>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Are these genuine Microsoft licenses? <span>+</span></div>
+    <div class="faq-a">Yes. All keys are 100% genuine and come directly from authorized distributors. They activate successfully on Microsoft servers.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">How fast will I receive my key? <span>+</span></div>
+    <div class="faq-a">Delivery is fully automated. Your license key will arrive in your inbox within 60 seconds of purchase — 24/7, including weekends.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">What if my key doesn't work? <span>+</span></div>
+    <div class="faq-a">We offer a full replacement guarantee. If your key fails to activate, contact our support and we'll send a replacement immediately.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Can I use the key on multiple devices? <span>+</span></div>
+    <div class="faq-a">Each license is for one device. If you need multiple licenses, simply place multiple orders.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">How do I activate my Windows? <span>+</span></div>
+    <div class="faq-a">Go to Settings → Update & Security → Activation → Change product key. Enter your key and follow the instructions. Internet connection required.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Key<span>Vault</span></div>
+  <div class="footer-text">© 2026 KeyVault. Instant license delivery.</div>
+  <div class="footer-text">support@keyvault.store</div>
+</footer>
+
+<!-- TIDIO CHAT — ВСТАВЬ СВОЙ КОД СЮДА -->
+<!-- <script src="//code.tidio.co/XXXXXXXX.js" async></script> -->
+
+</body>
+</html>
